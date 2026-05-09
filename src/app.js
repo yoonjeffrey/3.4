@@ -11,6 +11,8 @@ const tareaRoutes = require('./routes/tarea.routes');
 const personaRoutes = require('./routes/persona.routes');
 const tagRoutes = require('./routes/tag.routes');
 const userRoutes = require('./routes/user.routes');
+const authRoutes = require('./routes/auth.routes');
+const passport = require('./config/passport');
 
 const app = express();
 
@@ -19,6 +21,9 @@ app.use(express.json());
 
 // Middleware para parsear datos de formularios (opcional)
 app.use(express.urlencoded({ extended: true }));
+
+// Inicializar Passport
+app.use(passport.initialize());
 
 // Middleware de logging (opcional)
 app.use((req, res, next) => {
@@ -35,6 +40,7 @@ app.use('/api/tareas', tareaRoutes);
 app.use('/api/personas', personaRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/users', userRoutes);
+app.use('/auth', authRoutes);
 
 // Ruta de bienvenida
 app.get('/', (req, res) => {

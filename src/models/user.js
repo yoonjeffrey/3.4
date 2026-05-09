@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     email: DataTypes.STRING,
     password: DataTypes.STRING,
+    googleId: DataTypes.STRING,
     active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
