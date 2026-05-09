@@ -1,6 +1,7 @@
 /**
  * Punto de entrada de la aplicación
  */
+require('dotenv').config();
 
 const app = require('./src/app');
 

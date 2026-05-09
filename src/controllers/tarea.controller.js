@@ -1,256 +1,142 @@
-/**
- * Controlador de Tareas
- * Maneja las peticiones HTTP y responde con JSON o texto
- */
+const { Tarea, Persona, Tag, PersonaTareas, TareaTags } = require('../models');
+const { Op } = require('sequelize');
 
-const tareaModel = require('../models/tarea.model');
-
-// Función auxiliar para manejar el formato de respuesta (Actividad 4)
-const responderSegunFormato = (req, res, data, success = true, message = '') => {
-  const formato = req.query.formato;
-  
-  if (formato === 'text') {
-    let textResponse = `Success: ${success}\n`;
-    if (message) textResponse += `Message: ${message}\n`;
-    
-    if (Array.isArray(data)) {
-      textResponse += `Count: ${data.length}\n`;
-      textResponse += `Tasks:\n` + data.map(t => `- [${t.id}] ${t.titulo} (${t.completada ? 'Completada' : 'Pendiente'})`).join('\n');
-    } else if (data) {
-      textResponse += `Task: [${data.id}] ${data.titulo} (${data.completada ? 'Completada' : 'Pendiente'})`;
-    }
-    
-    return res.type('text/plain').send(textResponse);
-  }
-  
-  // Por defecto JSON
-  const response = { success };
-  if (message) response.message = message;
-  if (data) response.data = data;
-  if (Array.isArray(data)) response.count = data.length;
-  
-  res.json(response);
-};
-
-// GET /api/tareas - Obtener todas las tareas
-const obtenerTodas = (req, res) => {
+exports.obtenerTodas = async (req, res) => {
   try {
-    const tareas = tareaModel.obtenerTodas();
-    responderSegunFormato(req, res, tareas);
+    const tareas = await Tarea.findAll();
+    res.json({ success: true, data: tareas });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener las tareas',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Actividad 3: GET /api/tareas/buscar?q=termino - Buscar tareas por título
-const buscarPorTitulo = (req, res) => {
+exports.buscarPorTitulo = async (req, res) => {
   try {
     const query = req.query.q;
-    const tareas = tareaModel.buscarPorTitulo(query);
-    responderSegunFormato(req, res, tareas);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al buscar tareas',
-      error: error.message
+    const tareas = await Tarea.findAll({
+      where: {
+        title: {
+          [Op.like]: `%${query}%`
+        }
+      }
     });
+    res.json({ success: true, data: tareas });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// GET /api/tareas/:id - Obtener una tarea por ID
-const obtenerPorId = (req, res) => {
+exports.obtenerPorId = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido. Debe ser un número'
-      });
-    }
-    
-    const tarea = tareaModel.obtenerPorId(id);
-    
-    if (!tarea) {
-      return res.status(404).json({
-        success: false,
-        message: `Tarea con ID ${id} no encontrada`
-      });
-    }
-    
-    responderSegunFormato(req, res, tarea);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener la tarea',
-      error: error.message
+    const { id } = req.params;
+    const tarea = await Tarea.findByPk(id, {
+      include: [
+        { model: Persona, through: { attributes: [] } },
+        { model: Tag, through: { attributes: [] } }
+      ]
     });
+    if (!tarea) return res.status(404).json({ success: false, message: 'Tarea not found' });
+    res.json({ success: true, data: tarea });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// POST /api/tareas - Crear una nueva tarea
-const crear = (req, res) => {
+exports.crear = async (req, res) => {
   try {
-    const { titulo, completada } = req.body;
-    
-    // Validar datos requeridos
-    if (!titulo) {
-      return res.status(400).json({
-        success: false,
-        message: 'El campo "titulo" es requerido'
-      });
-    }
-    
-    const nuevaTarea = tareaModel.crear({ titulo, completada });
-    
-    res.status(201).json({
-      success: true,
-      message: 'Tarea creada exitosamente',
-      data: nuevaTarea
-    });
+    const tarea = await Tarea.create(req.body);
+    res.status(201).json({ success: true, data: tarea });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al crear la tarea',
-      error: error.message
-    });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// PUT /api/tareas/:id - Actualizar tarea completamente
-const actualizarCompleta = (req, res) => {
+exports.actualizarCompleta = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const { titulo, completada } = req.body;
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido. Debe ser un número'
-      });
-    }
-    
-    // Validar datos requeridos
-    if (!titulo) {
-      return res.status(400).json({
-        success: false,
-        message: 'El campo "titulo" es requerido'
-      });
-    }
-    
-    const tareaActualizada = tareaModel.actualizarCompleta(id, { titulo, completada });
-    
-    if (!tareaActualizada) {
-      return res.status(404).json({
-        success: false,
-        message: `Tarea con ID ${id} no encontrada`
-      });
-    }
-    
-    res.json({
-      success: true,
-      message: 'Tarea actualizada completamente',
-      data: tareaActualizada
-    });
+    const { id } = req.params;
+    const [updated] = await Tarea.update(req.body, { where: { id } });
+    if (!updated) return res.status(404).json({ success: false, message: 'Tarea not found' });
+    const tarea = await Tarea.findByPk(id);
+    res.json({ success: true, data: tarea });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al actualizar la tarea',
-      error: error.message
-    });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// PATCH /api/tareas/:id - Actualizar tarea parcialmente
-const actualizarParcial = (req, res) => {
+exports.actualizarParcial = exports.actualizarCompleta;
+
+exports.eliminar = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const datosParciales = req.body;
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido. Debe ser un número'
-      });
-    }
-    
-    // Si no hay datos para actualizar
-    if (Object.keys(datosParciales).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Debe enviar al menos un campo para actualizar'
-      });
-    }
-    
-    const tareaActualizada = tareaModel.actualizarParcial(id, datosParciales);
-    
-    if (!tareaActualizada) {
-      return res.status(404).json({
-        success: false,
-        message: `Tarea con ID ${id} no encontrada`
-      });
-    }
-    
-    res.json({
-      success: true,
-      message: 'Tarea actualizada parcialmente',
-      data: tareaActualizada
-    });
+    const { id } = req.params;
+    const deleted = await Tarea.destroy({ where: { id } });
+    if (!deleted) return res.status(404).json({ success: false, message: 'Tarea not found' });
+    res.json({ success: true, message: 'Tarea deleted' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al actualizar la tarea',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DELETE /api/tareas/:id - Eliminar una tarea
-const eliminar = (req, res) => {
+// Relation: associate Persona with Tarea
+exports.addPersona = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const { id, personaId } = req.params;
+    const tarea = await Tarea.findByPk(id);
+    const persona = await Persona.findByPk(personaId);
     
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido. Debe ser un número'
-      });
-    }
+    if (!tarea || !persona) return res.status(404).json({ success: false, message: 'Tarea or Persona not found' });
     
-    const tareaEliminada = tareaModel.eliminar(id);
-    
-    if (!tareaEliminada) {
-      return res.status(404).json({
-        success: false,
-        message: `Tarea con ID ${id} no encontrada`
-      });
-    }
-    
-    res.json({
-      success: true,
-      message: 'Tarea eliminada exitosamente',
-      data: tareaEliminada
-    });
+    await tarea.addPersona(persona);
+    res.json({ success: true, message: 'Persona added to Tarea' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al eliminar la tarea',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Exportar todos los métodos del controlador
-module.exports = {
-  obtenerTodas,
-  buscarPorTitulo,
-  obtenerPorId,
-  crear,
-  actualizarCompleta,
-  actualizarParcial,
-  eliminar
+// Relation: associate Tag with Tarea
+exports.addTag = async (req, res) => {
+  try {
+    const { id, tagId } = req.params;
+    const tarea = await Tarea.findByPk(id);
+    const tag = await Tag.findByPk(tagId);
+    
+    if (!tarea || !tag) return res.status(404).json({ success: false, message: 'Tarea or Tag not found' });
+    
+    await tarea.addTag(tag);
+    res.json({ success: true, message: 'Tag added to Tarea' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Relations queries
+exports.getTags = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tarea = await Tarea.findByPk(id, {
+      include: {
+        model: Tag,
+        through: { attributes: [] }
+      }
+    });
+    if (!tarea) return res.status(404).json({ success: false, message: 'Tarea not found' });
+    res.json({ success: true, data: tarea.Tags });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getPersonas = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tarea = await Tarea.findByPk(id, {
+      include: {
+        model: Persona,
+        through: { attributes: [] }
+      }
+    });
+    if (!tarea) return res.status(404).json({ success: false, message: 'Tarea not found' });
+    res.json({ success: true, data: tarea.Personas });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };

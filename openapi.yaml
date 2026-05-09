@@ -1,0 +1,327 @@
+openapi: 3.0.0
+info:
+  title: API Tareas MVC
+  description: Documentación de la API para gestionar tareas, personas, tags y usuarios.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3003
+    description: Servidor de desarrollo
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        active:
+          type: boolean
+    Persona:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+    Tarea:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+paths:
+  /api/users/register:
+    post:
+      summary: Registrar usuario
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Usuario registrado
+  /api/users/login:
+    post:
+      summary: Iniciar sesión
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+  /api/users/{id}:
+    put:
+      summary: Actualizar usuario
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Usuario actualizado
+    delete:
+      summary: Eliminar usuario físicamente
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario eliminado
+  /api/users/{id}/activate:
+    patch:
+      summary: Activar usuario
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario activado
+  /api/users/{id}/deactivate:
+    patch:
+      summary: Desactivar usuario
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario desactivado
+
+  /api/tareas:
+    get:
+      summary: Obtener todas las tareas
+      tags: [Tareas]
+      responses:
+        '200':
+          description: Lista de tareas
+    post:
+      summary: Crear tarea
+      tags: [Tareas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tarea'
+      responses:
+        '201':
+          description: Tarea creada
+  /api/tareas/{id}:
+    get:
+      summary: Obtener tarea por ID
+      tags: [Tareas]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalles de la tarea
+  /api/tareas/{id}/personas/{personaId}:
+    post:
+      summary: Asociar Persona a Tarea
+      tags: [Tareas - Relaciones]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: personaId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Relación creada
+  /api/tareas/{id}/tags/{tagId}:
+    post:
+      summary: Asociar Tag a Tarea
+      tags: [Tareas - Relaciones]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Relación creada
+  /api/tareas/{id}/tags:
+    get:
+      summary: Obtener tags de una tarea
+      tags: [Tareas - Relaciones]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de tags
+  /api/tareas/{id}/personas:
+    get:
+      summary: Obtener personas de una tarea
+      tags: [Tareas - Relaciones]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de personas
+
+  /api/personas:
+    get:
+      summary: Obtener todas las personas
+      tags: [Personas]
+      responses:
+        '200':
+          description: Lista de personas
+    post:
+      summary: Crear persona
+      tags: [Personas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Persona'
+      responses:
+        '201':
+          description: Persona creada
+  /api/personas/{id}/tareas:
+    get:
+      summary: Obtener tareas de una persona
+      tags: [Personas - Relaciones]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de tareas
+
+  /api/tags:
+    get:
+      summary: Obtener todos los tags
+      tags: [Tags]
+      responses:
+        '200':
+          description: Lista de tags
+  /api/tags/persona/{personaId}:
+    get:
+      summary: Obtener tags relacionados con una persona
+      tags: [Tags - Relaciones]
+      parameters:
+        - in: path
+          name: personaId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de tags
+  /api/personas/tag/{tagId}:
+    get:
+      summary: Obtener personas relacionadas con un tag
+      tags: [Personas - Relaciones]
+      parameters:
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de personas

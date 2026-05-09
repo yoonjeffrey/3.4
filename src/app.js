@@ -3,7 +3,14 @@
  */
 
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
+
 const tareaRoutes = require('./routes/tarea.routes');
+const personaRoutes = require('./routes/persona.routes');
+const tagRoutes = require('./routes/tag.routes');
+const userRoutes = require('./routes/user.routes');
 
 const app = express();
 
@@ -19,8 +26,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Documentación OpenAPI
+const swaggerDocument = YAML.load(path.join(__dirname, '../openapi.yaml'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 // Rutas
 app.use('/api/tareas', tareaRoutes);
+app.use('/api/personas', personaRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api/users', userRoutes);
 
 // Ruta de bienvenida
 app.get('/', (req, res) => {
