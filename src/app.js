@@ -11,14 +11,35 @@ const tareaRoutes = require('./routes/tarea.routes');
 const personaRoutes = require('./routes/persona.routes');
 const tagRoutes = require('./routes/tag.routes');
 const userRoutes = require('./routes/user.routes');
+const adminRoutes = require('./routes/admin.routes');
+
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+const cors = require('cors');
 
 const app = express();
+
+// Configurar CORS
+app.use(cors({
+  origin: 'http://localhost:5173', // Vite default port
+  credentials: true
+}));
 
 // Middleware para parsear JSON
 app.use(express.json());
 
 // Middleware para parsear datos de formularios (opcional)
 app.use(express.urlencoded({ extended: true }));
+
+// Configurar cookies y CSRF
+app.use(cookieParser());
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection);
+
+// Ruta para entregar el token CSRF al frontend
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 // Middleware de logging (opcional)
 app.use((req, res, next) => {
@@ -35,6 +56,7 @@ app.use('/api/tareas', tareaRoutes);
 app.use('/api/personas', personaRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Ruta de bienvenida
 app.get('/', (req, res) => {

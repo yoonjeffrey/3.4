@@ -22,6 +22,9 @@ components:
           type: string
         email:
           type: string
+        role:
+          type: string
+          enum: [admin, user]
         active:
           type: boolean
     Persona:
@@ -44,6 +47,8 @@ components:
           type: string
         status:
           type: string
+        userId:
+          type: integer
     Tag:
       type: object
       properties:
@@ -53,6 +58,21 @@ components:
           type: string
 
 paths:
+  /api/csrf-token:
+    get:
+      summary: Obtener token CSRF
+      tags: [Security]
+      responses:
+        '200':
+          description: Token CSRF para mutaciones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrfToken:
+                    type: string
+
   /api/users/register:
     post:
       summary: Registrar usuario
@@ -91,9 +111,36 @@ paths:
       responses:
         '200':
           description: Inicio de sesión exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      role:
+                        type: string
+  /api/users:
+    get:
+      summary: Obtener todos los usuarios (Admin)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
   /api/users/{id}:
     put:
-      summary: Actualizar usuario
+      summary: Actualizar usuario (Admin)
       tags: [Users]
       security:
         - bearerAuth: []
@@ -120,7 +167,7 @@ paths:
         '200':
           description: Usuario actualizado
     delete:
-      summary: Eliminar usuario físicamente
+      summary: Eliminar usuario físicamente (Admin)
       tags: [Users]
       security:
         - bearerAuth: []
@@ -135,7 +182,7 @@ paths:
           description: Usuario eliminado
   /api/users/{id}/activate:
     patch:
-      summary: Activar usuario
+      summary: Activar usuario (Admin)
       tags: [Users]
       security:
         - bearerAuth: []
@@ -150,7 +197,7 @@ paths:
           description: Usuario activado
   /api/users/{id}/deactivate:
     patch:
-      summary: Desactivar usuario
+      summary: Desactivar usuario (Admin)
       tags: [Users]
       security:
         - bearerAuth: []
@@ -166,14 +213,18 @@ paths:
 
   /api/tareas:
     get:
-      summary: Obtener todas las tareas
+      summary: Obtener todas las tareas del usuario (o todas si Admin)
       tags: [Tareas]
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Lista de tareas
     post:
-      summary: Crear tarea
+      summary: Crear tarea asociada al usuario
       tags: [Tareas]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -183,10 +234,27 @@ paths:
       responses:
         '201':
           description: Tarea creada
+  /api/tareas/buscar:
+    get:
+      summary: Buscar tareas por título (Scritp por usuario)
+      tags: [Tareas]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resultados de búsqueda
   /api/tareas/{id}:
     get:
       summary: Obtener tarea por ID
       tags: [Tareas]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -196,10 +264,76 @@ paths:
       responses:
         '200':
           description: Detalles de la tarea
+    delete:
+      summary: Eliminar tarea
+      tags: [Tareas]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tarea eliminada
+
+  /api/admin/search/usuarios-por-etiquetas:
+    get:
+      summary: Buscar Usuarios por Etiquetas (Admin)
+      tags: [Admin Search]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: tags
+          description: Lista de IDs de etiquetas separados por coma
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de usuarios relacionados
+  /api/admin/search/tareas-por-etiquetas:
+    get:
+      summary: Buscar Tareas por Etiquetas (Admin)
+      tags: [Admin Search]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: tags
+          description: Lista de IDs de etiquetas separados por coma
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de tareas relacionadas
+  /api/admin/search/etiquetas-por-usuarios:
+    get:
+      summary: Buscar Etiquetas por Usuarios (Admin)
+      tags: [Admin Search]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: users
+          description: Lista de IDs de usuarios separados por coma
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de etiquetas relacionadas
+
   /api/tareas/{id}/personas/{personaId}:
     post:
       summary: Asociar Persona a Tarea
       tags: [Tareas - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -218,6 +352,8 @@ paths:
     post:
       summary: Asociar Tag a Tarea
       tags: [Tareas - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -236,6 +372,8 @@ paths:
     get:
       summary: Obtener tags de una tarea
       tags: [Tareas - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -249,6 +387,8 @@ paths:
     get:
       summary: Obtener personas de una tarea
       tags: [Tareas - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -263,12 +403,16 @@ paths:
     get:
       summary: Obtener todas las personas
       tags: [Personas]
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Lista de personas
     post:
       summary: Crear persona
       tags: [Personas]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -282,6 +426,8 @@ paths:
     get:
       summary: Obtener tareas de una persona
       tags: [Personas - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -296,6 +442,8 @@ paths:
     get:
       summary: Obtener todos los tags
       tags: [Tags]
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Lista de tags
@@ -303,6 +451,8 @@ paths:
     get:
       summary: Obtener tags relacionados con una persona
       tags: [Tags - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: personaId
@@ -316,6 +466,8 @@ paths:
     get:
       summary: Obtener personas relacionadas con un tag
       tags: [Personas - Relaciones]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: tagId
