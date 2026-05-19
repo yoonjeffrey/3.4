@@ -11,6 +11,8 @@ const tareaRoutes = require('./routes/tarea.routes');
 const personaRoutes = require('./routes/persona.routes');
 const tagRoutes = require('./routes/tag.routes');
 const userRoutes = require('./routes/user.routes');
+const authRoutes = require('./routes/auth.routes');
+const passport = require('./config/passport');
 const adminRoutes = require('./routes/admin.routes');
 
 const cookieParser = require('cookie-parser');
@@ -21,7 +23,7 @@ const app = express();
 
 // Configurar CORS
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: ['http://localhost:5173', 'https://localhost:5173'],
   credentials: true
 }));
 
@@ -31,6 +33,8 @@ app.use(express.json());
 // Middleware para parsear datos de formularios (opcional)
 app.use(express.urlencoded({ extended: true }));
 
+// Inicializar Passport
+app.use(passport.initialize());
 // Configurar cookies y CSRF
 app.use(cookieParser());
 const csrfProtection = csrf({ cookie: true });
@@ -56,6 +60,7 @@ app.use('/api/tareas', tareaRoutes);
 app.use('/api/personas', personaRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/users', userRoutes);
+app.use('/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Ruta de bienvenida
