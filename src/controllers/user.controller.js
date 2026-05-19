@@ -34,13 +34,23 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'mi_secreto_super_seguro_para_jwt_2024', { expiresIn: '1h' });
-    res.json({ success: true, token });
+    const token = jwt.sign({ id: user.id, role: user.role, name: user.name, email: user.email }, process.env.JWT_SECRET || 'mi_secreto_super_seguro_para_jwt_2024', { expiresIn: '1h' });
+    res.json({ success: true, token, user: { id: user.id, name: user.name, role: user.role } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+exports.getAll = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] }
+    });
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;

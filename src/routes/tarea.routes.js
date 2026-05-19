@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const tareaController = require('../controllers/tarea.controller');
 
+const authMiddleware = require('../middlewares/auth.middleware');
+
+router.use(authMiddleware);
+
 router.get('/buscar', tareaController.buscarPorTitulo);
 router.get('/', tareaController.obtenerTodas);
 router.get('/:id', tareaController.obtenerPorId);

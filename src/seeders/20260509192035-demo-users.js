@@ -12,6 +12,7 @@ module.exports = {
         name: 'Admin',
         email: 'admin@test.com',
         password: hash,
+        role: 'admin',
         active: true,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -20,6 +21,7 @@ module.exports = {
         name: 'John Doe',
         email: 'john@test.com',
         password: hash,
+        role: 'user',
         active: true,
         createdAt: new Date(),
         updatedAt: new Date()

@@ -8,6 +8,7 @@ module.exports = {
         title: 'Comprar leche',
         description: 'Ir al supermercado a comprar leche',
         status: 'pending',
+        userId: 2, // John Doe
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -15,6 +16,7 @@ module.exports = {
         title: 'Estudiar para el examen',
         description: 'Repasar los temas de Meta 3.4',
         status: 'in_progress',
+        userId: 2, // John Doe
         createdAt: new Date(),
         updatedAt: new Date()
       }
