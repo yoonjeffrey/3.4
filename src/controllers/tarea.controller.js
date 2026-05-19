@@ -1,9 +1,17 @@
 const { Tarea, Persona, Tag, PersonaTareas, TareaTags } = require('../models');
 const { Op } = require('sequelize');
 
+const scopeOptions = (req) => {
+  const options = {};
+  if (req.user && req.user.role !== 'admin') {
+    options.userId = req.user.id;
+  }
+  return options;
+};
+
 exports.obtenerTodas = async (req, res) => {
   try {
-    const tareas = await Tarea.findAll();
+    const tareas = await Tarea.findAll({ where: scopeOptions(req) });
     res.json({ success: true, data: tareas });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -15,6 +23,7 @@ exports.buscarPorTitulo = async (req, res) => {
     const query = req.query.q;
     const tareas = await Tarea.findAll({
       where: {
+        ...scopeOptions(req),
         title: {
           [Op.like]: `%${query}%`
         }
@@ -29,7 +38,8 @@ exports.buscarPorTitulo = async (req, res) => {
 exports.obtenerPorId = async (req, res) => {
   try {
     const { id } = req.params;
-    const tarea = await Tarea.findByPk(id, {
+    const tarea = await Tarea.findOne({
+      where: { id, ...scopeOptions(req) },
       include: [
         { model: Persona, through: { attributes: [] } },
         { model: Tag, through: { attributes: [] } }
@@ -44,7 +54,8 @@ exports.obtenerPorId = async (req, res) => {
 
 exports.crear = async (req, res) => {
   try {
-    const tarea = await Tarea.create(req.body);
+    const tareaData = { ...req.body, userId: req.user.id };
+    const tarea = await Tarea.create(tareaData);
     res.status(201).json({ success: true, data: tarea });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -54,7 +65,7 @@ exports.crear = async (req, res) => {
 exports.actualizarCompleta = async (req, res) => {
   try {
     const { id } = req.params;
-    const [updated] = await Tarea.update(req.body, { where: { id } });
+    const [updated] = await Tarea.update(req.body, { where: { id, ...scopeOptions(req) } });
     if (!updated) return res.status(404).json({ success: false, message: 'Tarea not found' });
     const tarea = await Tarea.findByPk(id);
     res.json({ success: true, data: tarea });
@@ -68,7 +79,7 @@ exports.actualizarParcial = exports.actualizarCompleta;
 exports.eliminar = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Tarea.destroy({ where: { id } });
+    const deleted = await Tarea.destroy({ where: { id, ...scopeOptions(req) } });
     if (!deleted) return res.status(404).json({ success: false, message: 'Tarea not found' });
     res.json({ success: true, message: 'Tarea deleted' });
   } catch (error) {

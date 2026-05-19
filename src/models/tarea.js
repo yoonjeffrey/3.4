@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      Tarea.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
       Tarea.belongsToMany(models.Persona, {
         through: 'PersonaTareas',
         foreignKey: 'TareaId',
@@ -25,7 +29,8 @@ module.exports = (sequelize, DataTypes) => {
   Tarea.init({
     title: DataTypes.STRING,
     description: DataTypes.TEXT,
-    status: DataTypes.STRING
+    status: DataTypes.STRING,
+    userId: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Tarea',
