@@ -3,7 +3,7 @@
     <h1 class="text-h4 mb-4">Mis Tareas</h1>
     
     <v-row class="mb-4">
-      <v-col cols="12" sm="8">
+      <v-col cols="12" md="6">
         <v-text-field
           v-model="searchQuery"
           label="Buscar tareas..."
@@ -12,7 +12,16 @@
           @keyup.enter="searchTasks"
         ></v-text-field>
       </v-col>
-      <v-col cols="12" sm="4">
+      <v-col cols="12" md="3">
+        <v-select
+          v-model="statusFilter"
+          :items="statusOptions"
+          item-title="title"
+          item-value="value"
+          label="Filtrar por estado"
+        ></v-select>
+      </v-col>
+      <v-col cols="12" md="3">
         <v-btn color="primary" block height="56" @click="openCreateDialog">
           Nueva Tarea
         </v-btn>
@@ -29,7 +38,17 @@
           <v-card-title>{{ tarea.title }}</v-card-title>
           <v-card-text>
             {{ tarea.description }}
-            <div class="mt-2 text-caption">Status: {{ tarea.status }}</div>
+            <div class="mt-2">
+              <v-select
+                :model-value="tarea.status"
+                :items="statusValues"
+                label="Estado"
+                density="compact"
+                variant="outlined"
+                hide-details
+                @update:modelValue="(value) => updateStatus(tarea, value)"
+              ></v-select>
+            </div>
             <div class="mt-2">
               <v-chip v-for="tag in tarea.Tags" :key="tag.id" size="small" class="mr-1">
                 {{ tag.name }}
@@ -43,7 +62,7 @@
       </v-col>
     </v-row>
 
-    <!-- Dialogo para Nueva Tarea -->
+    <!-- dialogo nueva tarea -->
     <v-dialog v-model="dialog" max-width="500">
       <v-card>
         <v-card-title>Nueva Tarea</v-card-title>
@@ -51,7 +70,7 @@
           <v-form @submit.prevent="saveTask">
             <v-text-field v-model="newTask.title" label="Título" required></v-text-field>
             <v-textarea v-model="newTask.description" label="Descripción"></v-textarea>
-            <v-select v-model="newTask.status" :items="['pending', 'in_progress', 'completed']" label="Estado"></v-select>
+            <v-select v-model="newTask.status" :items="statusValues" label="Estado"></v-select>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -65,19 +84,36 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import api from '../services/api';
+
+const statusValues = ['pending', 'in_progress', 'completed'];
+const statusOptions = [
+  { title: 'Todos', value: 'all' },
+  { title: 'Pendiente', value: 'pending' },
+  { title: 'En progreso', value: 'in_progress' },
+  { title: 'Completada', value: 'completed' }
+];
 
 const tareas = ref([]);
 const loading = ref(false);
 const searchQuery = ref('');
 const dialog = ref(false);
+const statusFilter = ref('all');
 const newTask = ref({ title: '', description: '', status: 'pending' });
+
+const buildFilterParams = () => {
+  const params = {};
+  if (statusFilter.value && statusFilter.value !== 'all') {
+    params.status = statusFilter.value;
+  }
+  return params;
+};
 
 const fetchTasks = async () => {
   loading.value = true;
   try {
-    const res = await api.get('/tareas');
+    const res = await api.get('/tareas', { params: buildFilterParams() });
     tareas.value = res.data.data;
   } catch (error) {
     console.error(error);
@@ -92,7 +128,9 @@ const searchTasks = async () => {
   }
   loading.value = true;
   try {
-    const res = await api.get(`/tareas/buscar?q=${searchQuery.value}`);
+    const res = await api.get('/tareas/buscar', {
+      params: { q: searchQuery.value, ...buildFilterParams() }
+    });
     tareas.value = res.data.data;
   } catch (error) {
     console.error(error);
@@ -106,12 +144,32 @@ const openCreateDialog = () => {
   dialog.value = true;
 };
 
+const refreshTasks = async () => {
+  if (searchQuery.value) {
+    await searchTasks();
+  } else {
+    await fetchTasks();
+  }
+};
+
 const saveTask = async () => {
   try {
     await api.post('/tareas', newTask.value);
     dialog.value = false;
-    fetchTasks();
+    refreshTasks();
   } catch (error) {
+    console.error(error);
+  }
+};
+
+const updateStatus = async (tarea, status) => {
+  const previousStatus = tarea.status;
+  try {
+    await api.patch(`/tareas/${tarea.id}`, { status });
+    tarea.status = status;
+    await refreshTasks();
+  } catch (error) {
+    tarea.status = previousStatus;
     console.error(error);
   }
 };
@@ -119,7 +177,7 @@ const saveTask = async () => {
 const deleteTask = async (id) => {
   try {
     await api.delete(`/tareas/${id}`);
-    fetchTasks();
+    refreshTasks();
   } catch (error) {
     console.error(error);
   }
@@ -127,5 +185,9 @@ const deleteTask = async (id) => {
 
 onMounted(() => {
   fetchTasks();
+});
+
+watch(statusFilter, () => {
+  refreshTasks();
 });
 </script>

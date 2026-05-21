@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import * as userController from '../controllers/user.controller.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
+import { isAdmin } from '../middlewares/role.middleware.js';
+
 const router = express.Router();
-const userController = require('../controllers/user.controller');
-const authMiddleware = require('../middlewares/auth.middleware');
-const { isAdmin } = require('../middlewares/role.middleware');
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
@@ -14,4 +15,4 @@ router.delete('/:id', authMiddleware, isAdmin, userController.deletePhysical);
 router.patch('/:id/activate', authMiddleware, isAdmin, userController.activate);
 router.patch('/:id/deactivate', authMiddleware, isAdmin, userController.deactivate);
 
-module.exports = router;
+export default router;

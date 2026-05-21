@@ -1,8 +1,10 @@
-const { User } = require('../models');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import db from '../models/index.js';
 
-exports.register = async (req, res) => {
+const { User } = db;
+
+export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
@@ -23,7 +25,7 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
@@ -41,7 +43,7 @@ exports.login = async (req, res) => {
   }
 };
 
-exports.getAll = async (req, res) => {
+export const getAll = async (req, res) => {
   try {
     const users = await User.findAll({
       attributes: { exclude: ['password'] }
@@ -51,7 +53,7 @@ exports.getAll = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, password } = req.body;
@@ -73,7 +75,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.deletePhysical = async (req, res) => {
+export const deletePhysical = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await User.destroy({ where: { id } });
@@ -84,7 +86,7 @@ exports.deletePhysical = async (req, res) => {
   }
 };
 
-exports.activate = async (req, res) => {
+export const activate = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByPk(id);
@@ -98,7 +100,7 @@ exports.activate = async (req, res) => {
   }
 };
 
-exports.deactivate = async (req, res) => {
+export const deactivate = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByPk(id);

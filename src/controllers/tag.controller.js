@@ -1,6 +1,8 @@
-const { Tag, Tarea, Persona } = require('../models');
+import db from '../models/index.js';
 
-exports.getAll = async (req, res) => {
+const { Tag, Tarea, Persona } = db;
+
+export const getAll = async (req, res) => {
   try {
     const tags = await Tag.findAll();
     res.json({ success: true, data: tags });
@@ -9,7 +11,7 @@ exports.getAll = async (req, res) => {
   }
 };
 
-exports.getById = async (req, res) => {
+export const getById = async (req, res) => {
   try {
     const { id } = req.params;
     const tag = await Tag.findByPk(id, {
@@ -25,7 +27,7 @@ exports.getById = async (req, res) => {
   }
 };
 
-exports.create = async (req, res) => {
+export const create = async (req, res) => {
   try {
     const tag = await Tag.create(req.body);
     res.status(201).json({ success: true, data: tag });
@@ -34,7 +36,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await Tag.update(req.body, { where: { id } });
@@ -46,7 +48,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.delete = async (req, res) => {
+export const remove = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Tag.destroy({ where: { id } });
@@ -58,7 +60,7 @@ exports.delete = async (req, res) => {
 };
 
 // Relation: all tasks for a tag
-exports.getTareas = async (req, res) => {
+export const getTareas = async (req, res) => {
   try {
     const { id } = req.params;
     const tag = await Tag.findByPk(id, {
@@ -75,7 +77,7 @@ exports.getTareas = async (req, res) => {
 };
 
 // Indirect relation: all tags related to a persona
-exports.getByPersona = async (req, res) => {
+export const getByPersona = async (req, res) => {
   try {
     const { personaId } = req.params;
     const tags = await Tag.findAll({

@@ -31,13 +31,15 @@ test.describe('Tareas App E2E', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Mis Tareas');
     
     // Create a new task
+    const taskTitle = `Tarea de Prueba E2E ${Date.now()}`;
     await page.getByRole('button', { name: 'Nueva Tarea' }).click();
-    await page.getByLabel('Título').fill('Tarea de Prueba E2E');
+    await page.getByLabel('Título').fill(taskTitle);
     await page.getByLabel('Descripción').fill('Esta es una tarea creada por Playwright');
     await page.getByRole('button', { name: 'Guardar' }).click();
     
     // Verify task appeared
-    await expect(page.getByText('Tarea de Prueba E2E')).toBeVisible();
+    await expect(page.locator('.v-card-title').filter({ hasText: taskTitle })).toHaveCount(1);
+    await expect(page.locator('.v-card-title').filter({ hasText: taskTitle })).toBeVisible();
   });
 
 });

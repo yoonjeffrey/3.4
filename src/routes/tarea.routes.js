@@ -1,8 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const tareaController = require('../controllers/tarea.controller');
+import express from 'express';
+import * as tareaController from '../controllers/tarea.controller.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
 
-const authMiddleware = require('../middlewares/auth.middleware');
+const router = express.Router();
 
 router.use(authMiddleware);
 
@@ -20,4 +20,4 @@ router.post('/:id/tags/:tagId', tareaController.addTag);
 router.get('/:id/tags', tareaController.getTags);
 router.get('/:id/personas', tareaController.getPersonas);
 
-module.exports = router;
+export default router;

@@ -1,6 +1,8 @@
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { User } = require('../models');
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import db from '../models/index.js';
+
+const { User } = db;
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'dummy_client_id',
@@ -9,30 +11,26 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // Find user by google ID
       let user = await User.findOne({ where: { googleId: profile.id } });
-      
+
       if (!user) {
-        // If not found, look by email
         if (profile.emails && profile.emails.length > 0) {
           user = await User.findOne({ where: { email: profile.emails[0].value } });
         }
-        
+
         if (user) {
-          // Link google account to existing user
           user.googleId = profile.id;
           await user.save();
         } else {
-          // Create new user
           user = await User.create({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null,
-            password: null // No password needed for OAuth users
+            password: null
           });
         }
       }
-      
+
       return done(null, user);
     } catch (error) {
       return done(error, null);
@@ -40,4 +38,4 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-module.exports = passport;
+export default passport;

@@ -1,5 +1,7 @@
-const { Tarea, Persona, Tag, PersonaTareas, TareaTags } = require('../models');
-const { Op } = require('sequelize');
+import { Op } from 'sequelize';
+import db from '../models/index.js';
+
+const { Tarea, Persona, Tag } = db;
 
 const scopeOptions = (req) => {
   const options = {};
@@ -9,21 +11,29 @@ const scopeOptions = (req) => {
   return options;
 };
 
-exports.obtenerTodas = async (req, res) => {
+const buildFilters = (req) => {
+  const filters = { ...scopeOptions(req) };
+  if (req.query.status) {
+    filters.status = req.query.status;
+  }
+  return filters;
+};
+
+export const obtenerTodas = async (req, res) => {
   try {
-    const tareas = await Tarea.findAll({ where: scopeOptions(req) });
+    const tareas = await Tarea.findAll({ where: buildFilters(req) });
     res.json({ success: true, data: tareas });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.buscarPorTitulo = async (req, res) => {
+export const buscarPorTitulo = async (req, res) => {
   try {
     const query = req.query.q;
     const tareas = await Tarea.findAll({
       where: {
-        ...scopeOptions(req),
+        ...buildFilters(req),
         title: {
           [Op.like]: `%${query}%`
         }
@@ -35,7 +45,7 @@ exports.buscarPorTitulo = async (req, res) => {
   }
 };
 
-exports.obtenerPorId = async (req, res) => {
+export const obtenerPorId = async (req, res) => {
   try {
     const { id } = req.params;
     const tarea = await Tarea.findOne({
@@ -52,7 +62,7 @@ exports.obtenerPorId = async (req, res) => {
   }
 };
 
-exports.crear = async (req, res) => {
+export const crear = async (req, res) => {
   try {
     const tareaData = { ...req.body, userId: req.user.id };
     const tarea = await Tarea.create(tareaData);
@@ -62,7 +72,7 @@ exports.crear = async (req, res) => {
   }
 };
 
-exports.actualizarCompleta = async (req, res) => {
+export const actualizarCompleta = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await Tarea.update(req.body, { where: { id, ...scopeOptions(req) } });
@@ -74,9 +84,9 @@ exports.actualizarCompleta = async (req, res) => {
   }
 };
 
-exports.actualizarParcial = exports.actualizarCompleta;
+export const actualizarParcial = actualizarCompleta;
 
-exports.eliminar = async (req, res) => {
+export const eliminar = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Tarea.destroy({ where: { id, ...scopeOptions(req) } });
@@ -88,7 +98,7 @@ exports.eliminar = async (req, res) => {
 };
 
 // Relation: associate Persona with Tarea
-exports.addPersona = async (req, res) => {
+export const addPersona = async (req, res) => {
   try {
     const { id, personaId } = req.params;
     const tarea = await Tarea.findByPk(id);
@@ -104,7 +114,7 @@ exports.addPersona = async (req, res) => {
 };
 
 // Relation: associate Tag with Tarea
-exports.addTag = async (req, res) => {
+export const addTag = async (req, res) => {
   try {
     const { id, tagId } = req.params;
     const tarea = await Tarea.findByPk(id);
@@ -120,7 +130,7 @@ exports.addTag = async (req, res) => {
 };
 
 // Relations queries
-exports.getTags = async (req, res) => {
+export const getTags = async (req, res) => {
   try {
     const { id } = req.params;
     const tarea = await Tarea.findByPk(id, {
@@ -136,7 +146,7 @@ exports.getTags = async (req, res) => {
   }
 };
 
-exports.getPersonas = async (req, res) => {
+export const getPersonas = async (req, res) => {
   try {
     const { id } = req.params;
     const tarea = await Tarea.findByPk(id, {

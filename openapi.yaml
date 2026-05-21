@@ -217,6 +217,13 @@ paths:
       tags: [Tareas]
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
       responses:
         '200':
           description: Lista de tareas
@@ -246,6 +253,12 @@ paths:
           required: true
           schema:
             type: string
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
       responses:
         '200':
           description: Resultados de búsqueda

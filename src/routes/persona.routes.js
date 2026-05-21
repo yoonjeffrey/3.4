@@ -1,15 +1,16 @@
-const express = require('express');
+import express from 'express';
+import * as personaController from '../controllers/persona.controller.js';
+
 const router = express.Router();
-const personaController = require('../controllers/persona.controller');
 
 router.get('/', personaController.getAll);
 router.get('/tag/:tagId', personaController.getByTag);
 router.get('/:id', personaController.getById);
 router.post('/', personaController.create);
 router.put('/:id', personaController.update);
-router.delete('/:id', personaController.delete);
+router.delete('/:id', personaController.remove);
 
 // Relations
 router.get('/:id/tareas', personaController.getTareas);
 
-module.exports = router;
+export default router;

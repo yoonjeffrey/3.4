@@ -1,11 +1,8 @@
-/**
- * Punto de entrada de la aplicación
- */
-require('dotenv').config();
-
-const fs = require('fs');
-const https = require('https');
-const app = require('./src/app');
+// entrada del servidor
+import 'dotenv/config';
+import fs from 'node:fs';
+import https from 'node:https';
+import app from './src/app.js';
 
 const PORT = process.env.PORT || 3003;
 
@@ -15,6 +12,6 @@ const options = {
 };
 
 https.createServer(options, app).listen(PORT, () => {
-  console.log(`🚀 Servidor (HTTPS) corriendo en https://localhost:${PORT}`);
-  console.log(`📚 Documentación de endpoints: https://localhost:${PORT}/api-docs`);
+  console.log(`servidor https corriendo en https://localhost:${PORT}`);
+  console.log(`documentacion de endpoints: https://localhost:${PORT}/api-docs`);
 });

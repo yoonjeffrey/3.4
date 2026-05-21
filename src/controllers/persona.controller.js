@@ -1,6 +1,8 @@
-const { Persona, Tarea, Tag } = require('../models');
+import db from '../models/index.js';
 
-exports.getAll = async (req, res) => {
+const { Persona, Tarea, Tag } = db;
+
+export const getAll = async (req, res) => {
   try {
     const personas = await Persona.findAll();
     res.json({ success: true, data: personas });
@@ -9,7 +11,7 @@ exports.getAll = async (req, res) => {
   }
 };
 
-exports.getById = async (req, res) => {
+export const getById = async (req, res) => {
   try {
     const { id } = req.params;
     const persona = await Persona.findByPk(id, {
@@ -25,7 +27,7 @@ exports.getById = async (req, res) => {
   }
 };
 
-exports.create = async (req, res) => {
+export const create = async (req, res) => {
   try {
     const persona = await Persona.create(req.body);
     res.status(201).json({ success: true, data: persona });
@@ -34,7 +36,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await Persona.update(req.body, { where: { id } });
@@ -46,7 +48,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.delete = async (req, res) => {
+export const remove = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Persona.destroy({ where: { id } });
@@ -58,7 +60,7 @@ exports.delete = async (req, res) => {
 };
 
 // Relation: all tasks for a persona
-exports.getTareas = async (req, res) => {
+export const getTareas = async (req, res) => {
   try {
     const { id } = req.params;
     const persona = await Persona.findByPk(id, {
@@ -75,7 +77,7 @@ exports.getTareas = async (req, res) => {
 };
 
 // Indirect relation: all personas related to a tag
-exports.getByTag = async (req, res) => {
+export const getByTag = async (req, res) => {
   try {
     const { tagId } = req.params;
     const personas = await Persona.findAll({

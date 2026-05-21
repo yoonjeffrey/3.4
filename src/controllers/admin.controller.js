@@ -1,8 +1,10 @@
-const { User, Tarea, Tag, Persona } = require('../models');
+import db from '../models/index.js';
 
-exports.searchUsuariosPorEtiquetas = async (req, res) => {
+const { User, Tarea, Tag, Persona } = db;
+
+export const searchUsuariosPorEtiquetas = async (req, res) => {
   try {
-    const { tags } = req.query; // Expecting comma-separated tag IDs: ?tags=1,2
+    const { tags } = req.query; // tag ids separated by commas
     if (!tags) return res.status(400).json({ success: false, message: 'Tags are required' });
     const tagIds = tags.split(',').map(id => parseInt(id, 10));
 
@@ -36,7 +38,7 @@ exports.searchUsuariosPorEtiquetas = async (req, res) => {
   }
 };
 
-exports.searchTareasPorEtiquetas = async (req, res) => {
+export const searchTareasPorEtiquetas = async (req, res) => {
   try {
     const { tags } = req.query;
     if (!tags) return res.status(400).json({ success: false, message: 'Tags are required' });
@@ -58,9 +60,9 @@ exports.searchTareasPorEtiquetas = async (req, res) => {
   }
 };
 
-exports.searchEtiquetasPorUsuarios = async (req, res) => {
+export const searchEtiquetasPorUsuarios = async (req, res) => {
   try {
-    const { users } = req.query; // Expecting comma-separated user IDs: ?users=1,2
+    const { users } = req.query; // user ids separated by commas
     if (!users) return res.status(400).json({ success: false, message: 'Users are required' });
     const userIds = users.split(',').map(id => parseInt(id, 10));
 
